@@ -1,259 +1,144 @@
-# 🩺 MediLog Edge
-
-### Offline-first healthcare for low-connectivity environments
-
-MediLog Edge is an offline-first healthcare platform designed for rural health workers, community health workers, and primary healthcare centers where reliable internet connectivity is not always available.
-
-It combines React, PWA technology, IndexedDB, MERN, TensorFlow.js, Google Speech-to-Text, and Gemini to keep essential healthcare workflows running even when the network goes down.
-
-When connectivity returns, locally stored records are synchronized with the central MongoDB database.
+# 🩺 MediLog Edge – Offline-First Healthcare Platform
 
 <p align="center">
 
-
-
-
-
-
-
-\
+![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react\&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?logo=node.js\&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb\&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-Enabled-4285F4?logo=pwa\&logoColor=white)
+![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-AI-FF6F00?logo=tensorflow\&logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini%20API-AI-8E75B2)
+![License](https://img.shields.io/badge/License-MIT-green)
+![GDGoC](https://img.shields.io/badge/GDGoC-PSIT-4285F4)
 
 </p>
 
 <p align="center">
-Built for the <strong>GDGoC PSIT Hacktoberfest Initiative</strong>
+  <strong>Offline-first healthcare for communities where connectivity cannot be guaranteed.</strong>
 </p>
 
 ---
 
-## 🌍 Why MediLog Edge?
+## 🌍 Overview
 
-Healthcare workers in low-connectivity environments often face:
+**MediLog Edge** is an offline-first healthcare platform designed for rural health workers, community health workers, and primary healthcare centers operating in low-connectivity environments.
 
-* Unstable or unavailable internet
-* Manual patient records
-* Difficulty accessing previous medical history
-* Delayed data synchronization
-* Limited access to basic screening tools
-* Time-consuming manual data entry
+The platform allows healthcare workers to continue managing essential patient information even when internet connectivity is unavailable.
 
-Traditional web applications often become unusable when the internet disappears.
+When connectivity returns, locally stored records can be synchronized with the central backend.
 
-MediLog Edge takes a different approach:
-
-> The application works locally first and synchronizes when connectivity returns.
+MediLog Edge combines **React, PWA, IndexedDB, Node.js, Express, MongoDB, TensorFlow.js, Google Speech-to-Text, and Gemini API** into a single healthcare-focused platform.
 
 ---
 
-## 💡 What MediLog Edge Provides
+## ✨ Pitch & Core Features
 
-| Capability               | What it does                                             |
-| ------------------------ | -------------------------------------------------------- |
-| 📱 Offline-first records | Patient records remain accessible without internet       |
-| 💾 Local storage         | Uses IndexedDB for local persistence                     |
-| 🔄 Smart synchronization | Queues offline operations and syncs when online          |
-| 🤖 Edge AI               | TensorFlow.js enables lightweight on-device screening    |
-| 🎙️ Voice entry          | Converts spoken patient information into structured data |
-| 🔐 Secure access         | JWT-based authentication protects patient information    |
-| 📲 PWA                   | Designed to work like an installable web application     |
+### 📱 Offline-First Patient Records
+
+Healthcare workers can continue accessing and managing patient information without an active internet connection.
+
+* Local patient record storage
+* IndexedDB persistence
+* Offline data access
+* Sync queue for pending operations
+
+### 🔄 Smart Synchronization
+
+Changes made while offline can be synchronized once the internet connection becomes available.
+
+* Offline operation queue
+* Automatic synchronization
+* Duplicate prevention
+* Failed-sync retry handling
+
+### 🤖 Edge AI Screening
+
+TensorFlow.js enables lightweight AI processing directly on the user's device.
+
+* Camera-based screening
+* On-device inference
+* Reduced dependency on cloud connectivity
+* Screening and decision-support capabilities
+
+### 🎙️ Voice-Based Data Entry
+
+Healthcare workers can provide patient information using voice instead of manually entering every field.
+
+```text
+Voice Input
+     ↓
+Google Speech-to-Text
+     ↓
+Transcribed Text
+     ↓
+Gemini API
+     ↓
+Structured Patient Data
+```
+
+### 🔐 Secure Authentication
+
+JWT-based authentication protects access to healthcare data and backend resources.
+
+### 📲 Progressive Web App
+
+MediLog Edge is designed as a PWA so it can provide an app-like experience across supported devices.
 
 ---
 
 ## 🏗️ System Architecture
 
 ```text
-                    ┌──────────────────────┐
-                    │    Healthcare Worker │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │      React PWA       │
-                    │ Dashboard • Records  │
-                    │ Forms • Services     │
-                    └──────────┬───────────┘
-                               │
-                  ┌────────────┴────────────┐
-                  │                         │
-                  ▼                         ▼
-        ┌──────────────────┐      ┌──────────────────┐
-        │    IndexedDB     │      │     AI Layer     │
-        │                  │      │                  │
-        │ Patient Records  │      │ TensorFlow.js    │
-        │ Local Cache      │      │ Camera Screening │
-        │ Sync Queue       │      │ Speech-to-Text   │
-        └────────┬─────────┘      │ Gemini API       │
-                 │                └──────────────────┘
-                 │
-                 │ Internet Available
-                 ▼
-        ┌──────────────────┐
-        │ Node.js + Express │
-        │                  │
-        │ REST APIs        │
-        │ Authentication   │
-        │ Validation       │
-        │ Sync Engine      │
-        └────────┬─────────┘
-                 │
-                 ▼
-        ┌──────────────────┐
-        │     MongoDB      │
-        │                  │
-        │ Users            │
-        │ Patients         │
-        │ Medical Records  │
-        │ Sync Metadata    │
-        └──────────────────┘
+                    Healthcare Worker
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   React PWA  │
+                    └──────┬───────┘
+                           │
+              ┌────────────┴────────────┐
+              ▼                         ▼
+       ┌──────────────┐          ┌──────────────┐
+       │   IndexedDB  │          │    Edge AI   │
+       │              │          │ TensorFlow.js│
+       │ Patient Data │          │ Camera       │
+       │ Sync Queue   │          │ Screening    │
+       └──────┬───────┘          └──────────────┘
+              │
+              │ Internet Available
+              ▼
+       ┌──────────────┐
+       │ Node +       │
+       │ Express API  │
+       └──────┬───────┘
+              │
+              ▼
+       ┌──────────────┐
+       │   MongoDB    │
+       │              │
+       │ Users        │
+       │ Patients     │
+       │ Records      │
+       └──────────────┘
 ```
-
----
-
-## 🔄 How the Offline-First Flow Works
-
-```text
-User Action
-     ↓
-Create / Update Patient
-     ↓
-IndexedDB
-     ↓
-Sync Queue
-     ↓
-Continue Working Offline
-     ↓
-Internet Returns
-     ↓
-Sync Engine
-     ↓
-Express REST API
-     ↓
-Data Validation
-     ↓
-MongoDB
-     ↓
-Sync Confirmed
-```
-
-The synchronization layer is designed to reduce:
-
-* Duplicate records
-* Lost updates
-* Failed synchronization
-* Inconsistent local state
-
----
-
-## 🤖 AI-Assisted Camera Screening
-
-MediLog Edge uses TensorFlow.js for lightweight AI inference directly on the user's device.
-
-```text
-Device Camera
-     ↓
-React Camera Component
-     ↓
-TensorFlow.js Model
-     ↓
-On-Device Inference
-     ↓
-Screening Result
-     ↓
-Patient Record
-```
-
-This reduces dependency on continuous internet connectivity.
-
-The AI functionality is intended for screening and decision support, not as a replacement for professional medical diagnosis.
-
----
-
-## 🎙️ Voice-Based Medical Data Entry
-
-Healthcare workers can provide patient information through voice instead of manually entering every field.
-
-```text
-Healthcare Worker
-       ↓
-Voice Input
-       ↓
-Google Speech-to-Text
-       ↓
-Transcribed Text
-       ↓
-Gemini API
-       ↓
-Structured Patient JSON
-       ↓
-Schema Validation
-       ↓
-Patient Record
-       ↓
-IndexedDB / MongoDB
-```
-
-Example input:
-
-```text
-Patient is 42 years old and has fever and cough
-for the last three days.
-```
-
-Example structured output:
-
-```json
-{
-  "patientName": "Example Patient",
-  "age": 42,
-  "symptoms": ["fever", "cough"],
-  "duration": "3 days"
-}
-```
-
-AI-generated information must be validated before being stored as patient data.
-
----
-
-## 🔐 Authentication
-
-MediLog Edge uses JWT-based authentication.
-
-```text
-User
- ↓
-Login
- ↓
-Express API
- ↓
-Credential Validation
- ↓
-JWT Generation
- ↓
-React Application
- ↓
-Authenticated Requests
- ↓
-Protected API Routes
-```
-
-Patient information should only be accessible to authenticated and authorized users.
 
 ---
 
 ## 🧰 Technology Stack
 
-| Layer          | Technologies          |
-| -------------- | --------------------- |
-| Frontend       | React.js, JavaScript  |
-| Web Platform   | PWA, Service Workers  |
-| Local Storage  | IndexedDB             |
-| Backend        | Node.js, Express.js   |
-| API            | REST APIs             |
-| Database       | MongoDB               |
-| Authentication | JWT                   |
-| Edge AI        | TensorFlow.js         |
-| Voice          | Google Speech-to-Text |
-| Generative AI  | Gemini API            |
+| Technology            | Purpose                            |
+| --------------------- | ---------------------------------- |
+| React.js              | Frontend application               |
+| PWA                   | Offline-capable web application    |
+| IndexedDB             | Local patient data storage         |
+| Node.js               | Backend runtime                    |
+| Express.js            | REST API layer                     |
+| MongoDB               | Central database                   |
+| JWT                   | Authentication                     |
+| TensorFlow.js         | On-device AI screening             |
+| Google Speech-to-Text | Voice transcription                |
+| Gemini API            | Structured medical data extraction |
+| Git & GitHub          | Version control and collaboration  |
 
 ---
 
@@ -264,13 +149,6 @@ MediLog-Edge/
 │
 ├── client/
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   ├── ai/
-│   │   ├── db/
-│   │   └── utils/
-│   │
 │   ├── public/
 │   └── package.json
 │
@@ -280,51 +158,47 @@ MediLog-Edge/
 │   ├── models/
 │   ├── routes/
 │   ├── services/
-│   ├── utils/
 │   └── server.js
 │
-├── README.md
+├── .github/
+│   └── ISSUE_TEMPLATE/
+│
 ├── .env.example
-└── .gitignore
+├── .gitignore
+├── CONTRIBUTING.md
+├── LICENSE
+├── README.md
+└── package.json
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Step-by-Step Local Setup Guide
 
-### Prerequisites
-
-Make sure you have:
-
-* Node.js
-* npm
-* Git
-* MongoDB or MongoDB Atlas
-
-### Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd MediLog-Edge
 ```
 
-### Install frontend dependencies
+### 2. Install Dependencies
+
+For the frontend:
 
 ```bash
 cd client
 npm install
 ```
 
-### Install backend dependencies
+For the backend:
 
 ```bash
 cd ../server
 npm install
 ```
 
----
-
-## 🔑 Environment Variables
+### 3. Configure Environment Variables
 
 Create a `.env` file inside the `server` directory.
 
@@ -336,104 +210,87 @@ GEMINI_API_KEY=your_gemini_api_key
 GOOGLE_APPLICATION_CREDENTIALS=your_google_credentials
 ```
 
-For contributors, use `.env.example`:
+Never commit `.env` files, API keys, database credentials, or service-account credentials.
 
-```env
-PORT=
-MONGODB_URI=
-JWT_SECRET=
-GEMINI_API_KEY=
-GOOGLE_APPLICATION_CREDENTIALS=
-```
-
-### Security
-
-Never commit secrets to GitHub.
-
-Do not commit:
-
-* API keys
-* JWT secrets
-* Google credentials
-* Database passwords
-* `.env` files
-* Service-account JSON files
-
-Make sure sensitive files are included in `.gitignore`.
-
----
-
-## ▶️ Run the Project
-
-Start the backend:
+### 4. Start the Backend
 
 ```bash
 cd server
 npm run dev
 ```
 
-Open another terminal and start the frontend:
+### 5. Start the Frontend
+
+Open another terminal:
 
 ```bash
 cd client
 npm run dev
 ```
 
-Then open the local development URL provided by Vite.
+The frontend will be available at the local development URL provided by Vite.
 
 ---
 
-## 🧪 Testing Checklist
+## 🧪 Testing
 
-Before submitting a Pull Request, contributors should verify their changes.
+Before creating a Pull Request, contributors should verify:
 
-### Offline functionality
+### Offline Functionality
 
-* [ ] Create a patient while offline
-* [ ] Update a patient while offline
-* [ ] Refresh the application
-* [ ] Verify local data remains available
-* [ ] Reconnect to the internet
-* [ ] Verify queued operations synchronize
-* [ ] Verify duplicate records are not created
+* Create patient while offline
+* Update patient while offline
+* Refresh the application
+* Verify local records remain available
+* Reconnect to the internet
+* Verify synchronization
+* Verify duplicate records are not created
 
 ### Authentication
 
-* [ ] Valid login
-* [ ] Invalid credentials
-* [ ] Invalid or expired JWT
-* [ ] Protected routes
-* [ ] Unauthorized access handling
+* Valid login
+* Invalid credentials
+* Protected routes
+* Expired JWT handling
+* Unauthorized access handling
 
 ### AI
 
-* [ ] Camera permission handling
-* [ ] TensorFlow.js model loading
-* [ ] Camera screening
-* [ ] Voice input
-* [ ] Speech-to-Text conversion
-* [ ] Gemini JSON extraction
-* [ ] Invalid AI response handling
-* [ ] JSON/schema validation
+* Camera permissions
+* TensorFlow.js model loading
+* Camera screening
+* Voice input
+* Speech-to-Text conversion
+* Gemini response handling
+* JSON validation
 
 ---
 
 ## 🤝 Contributing
 
-MediLog Edge is part of the GDGoC PSIT Hacktoberfest initiative.
+MediLog Edge is an open-source project developed as part of the **GDGoC PSIT Hacktoberfest Initiative**.
 
-### Contribution Flow
+We welcome contributions in:
+
+* Frontend development
+* Offline-first functionality
+* Backend APIs
+* Database development
+* AI/ML integration
+* Testing
+* Documentation
+* Accessibility and UI/UX
+
+### Contribution Workflow
 
 ```text
-Explore Issues
-      ↓
 Choose an Issue
       ↓
 Claim / Get Assigned
       ↓
 Fork Repository
       ↓
-Create Feature Branch
+Create Branch
       ↓
 Implement Changes
       ↓
@@ -445,74 +302,52 @@ Create Pull Request
       ↓
 Maintainer Review
       ↓
-Changes Requested
-      ↓
-Make Changes
-      ↓
-Review Again
-      ↓
-Approved
-      ↓
-Merged
+Merge
 ```
 
----
+### Before Opening a Pull Request
 
-## 🌱 Contribution Areas
-
-| Area              | Possible Contributions                                                         |
-| ----------------- | ------------------------------------------------------------------------------ |
-| 🎨 Frontend       | Patient UI, dashboard, PWA, responsive design, accessibility                   |
-| 📱 Offline System | IndexedDB, caching, sync queue, background sync, conflict handling             |
-| ⚙️ Backend        | REST APIs, MongoDB schemas, authentication, authorization, validation          |
-| 🤖 AI             | TensorFlow.js, camera integration, Speech-to-Text, Gemini, response validation |
-| 🧪 Testing        | Unit tests, API tests, offline tests, integration tests, error handling        |
-| 📚 Documentation  | Developer docs, API docs, setup guides, user guides                            |
+* Read `CONTRIBUTING.md`
+* Check existing Issues
+* Work only on the assigned issue
+* Keep the PR focused
+* Test your changes locally
+* Do not commit secrets
+* Clearly describe your changes
+* Link the relevant issue
 
 ---
 
-## 📌 Contribution Rules
+## 🐛 Issues & Feature Requests
 
-1. Check existing Issues before starting work.
-2. Do not work on an issue without claiming it or receiving maintainer approval.
-3. Keep your Pull Request focused on the assigned issue.
-4. Do not make unrelated changes.
-5. Follow the existing project structure.
-6. Test your changes locally.
-7. Never commit secrets or credentials.
-8. Clearly describe your implementation in the PR.
-9. Mention the issue being resolved.
-10. Respond to maintainer review comments.
+Found a bug or have an improvement in mind?
 
----
+Open an issue with:
 
-## 🔀 Branch Naming
+* Clear title
+* Problem description
+* Steps to reproduce, if applicable
+* Expected behaviour
+* Actual behaviour
+* Screenshots or logs when useful
 
-Use descriptive branch names.
-
-```text
-feature/patient-dashboard
-feature/indexeddb-sync
-feature/jwt-auth
-feature/tensorflow-screening
-fix/offline-sync
-docs/setup-guide
-test/patient-api
-```
+For Hacktoberfest contributions, please check the existing Issues before starting work.
 
 ---
 
-## 📝 Commit Convention
+## 🎯 SDG 3 — Good Health and Well-Being
 
-Use clear and meaningful commit messages.
+MediLog Edge aligns with **United Nations Sustainable Development Goal 3: Good Health and Well-Being**.
 
-```text
-feat: add patient registration
-fix: resolve offline sync issue
-docs: update setup instructions
-test: add patient API tests
-refactor: improve sync service
-```
+The project focuses on improving healthcare accessibility and continuity in environments where reliable connectivity may not always be available.
+
+Key areas include:
+
+* Accessible digital patient records
+* Offline healthcare workflows
+* Basic AI-assisted screening
+* Healthcare worker efficiency
+* Continuity of digital information
 
 ---
 
@@ -522,50 +357,34 @@ Potential future improvements include:
 
 * Multi-language voice support
 * Advanced edge-AI screening
-* Improved conflict resolution
-* Automatic medical report generation
+* Improved offline conflict resolution
 * Healthcare device integration
+* Automated medical report generation
 * Patient analytics
-* Better offline synchronization
+* Advanced synchronization
 * Federated or on-device learning
-* Additional accessibility features
+* Improved accessibility
 
 ---
 
-## 🎯 SDG 3 Alignment
+## 📜 License
 
-### Good Health and Well-Being
+This project is licensed under the **MIT License**.
 
-MediLog Edge supports Sustainable Development Goal 3 by exploring accessible digital healthcare solutions for communities where connectivity and digital infrastructure may be limited.
-
-The project focuses on improving:
-
-* Healthcare data accessibility
-* Continuity of digital records
-* Basic screening support
-* Healthcare worker efficiency
-* Access to technology in low-connectivity environments
+See the `LICENSE` file for more information.
 
 ---
 
-## ⚠️ Medical Disclaimer
+## 👥 Maintainers & Community
 
-MediLog Edge is an educational and open-source technology project.
+MediLog Edge is maintained by the **GDGoC PSIT community and contributors**.
 
-AI-generated outputs and screening results are intended to provide assistance and decision support. They should not be treated as definitive medical diagnoses.
+Built as part of the **GDGoC PSIT Hacktoberfest Initiative**.
 
-Healthcare professionals should make final clinical decisions.
-
----
-
-## 👥 Maintainers
-
-GDGoC PSIT Kanpur
-
-This project is developed as part of the GDGoC PSIT Hacktoberfest initiative.
+For questions, discussions, contribution opportunities, or mentorship, connect with the GDGoC PSIT community.
 
 ---
 
-## 📄 License
-
-The project license will be finalized by the maintainers.
+<p align="center">
+  Made with ❤️ for accessible healthcare
+</p>
