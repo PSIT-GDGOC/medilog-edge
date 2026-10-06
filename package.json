@@ -1,0 +1,30 @@
+{
+  "name": "medilog-edge",
+  "version": "1.0.0",
+  "description": "Offline-First Healthcare Platform for rural and community health workers",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "server": "nodemon server/server.js",
+    "client": "npm --prefix client run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "npm --prefix client run build",
+    "install-all": "npm install && npm --prefix server install && npm --prefix client install"
+  },
+  "keywords": [
+    "healthcare",
+    "offline-first",
+    "indexeddb",
+    "pwa",
+    "mern",
+    "react",
+    "express",
+    "mongodb"
+  ],
+  "author": "MediLog Edge Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "nodemon": "^3.1.9"
+  }
+}
