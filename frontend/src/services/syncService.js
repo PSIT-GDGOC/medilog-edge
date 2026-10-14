@@ -79,7 +79,7 @@ class SyncService {
             // Update local IndexedDB
             const db = await getDB();
             const tx = db.transaction('patients', 'readwrite');
-            
+
             // If local temp ID was different from server assigned patientId, remove old key
             if (item.payload.patientId && item.payload.patientId !== serverPatient.patientId) {
               await tx.store.delete(item.payload.patientId);

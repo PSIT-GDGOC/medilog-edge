@@ -1,9 +1,9 @@
 /**
  * MediLog Edge - AI Extension Points
- * 
+ *
  * NOTE: Edge AI screening (TensorFlow.js camera screening, decision-support models)
- * is part of the future contributor roadmap. 
- * 
+ * is part of the future contributor roadmap.
+ *
  * Contributor Guidelines & Subsystems to be implemented in future PRs:
  * - Camera capture & preprocessing
  * - On-device TFJS model loading & offline inference

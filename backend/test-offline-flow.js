@@ -1,6 +1,6 @@
 /**
  * MediLog Edge - Core MVP Offline-First End-to-End Simulation Test
- * 
+ *
  * Verifies the exact 14-step offline workflow:
  * 1. Start the application online.
  * 2. Load patient data into local cache.
@@ -211,7 +211,7 @@ async function runOfflineFlowTest() {
           })
         });
         const serverSaved = (await syncRes.json()).data;
-        
+
         // Update local DB
         await db.delete('patients', item.patientId);
         await db.put('patients', { ...serverSaved, isSynced: true });
