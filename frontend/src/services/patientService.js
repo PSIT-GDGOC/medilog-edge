@@ -30,7 +30,7 @@ export const patientService = {
           // Merge with any unsynced offline records in local DB
           const unsyncedLocals = localPatients.filter((p) => p.isSynced === false);
           await saveAllLocalPatients(res.data);
-          
+
           // Re-persist unsynced records
           for (const unsynced of unsyncedLocals) {
             await saveLocalPatient(unsynced);

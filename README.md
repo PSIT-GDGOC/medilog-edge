@@ -147,12 +147,12 @@ MediLog Edge is designed as a PWA so it can provide an app-like experience acros
 ```text
 MediLog-Edge/
 │
-├── client/
+├── frontend/
 │   ├── src/
 │   ├── public/
 │   └── package.json
 │
-├── server/
+├── backend/
 │   ├── controllers/
 │   ├── middleware/
 │   ├── models/
@@ -187,20 +187,20 @@ cd MediLog-Edge
 For the frontend:
 
 ```bash
-cd client
+cd frontend
 npm install
 ```
 
 For the backend:
 
 ```bash
-cd ../server
+cd ../backend
 npm install
 ```
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file inside the `server` directory.
+Create a `.env` file inside the `backend` directory.
 
 ```env
 PORT=5000
@@ -215,7 +215,7 @@ Never commit `.env` files, API keys, database credentials, or service-account cr
 ### 4. Start the Backend
 
 ```bash
-cd server
+cd backend
 npm run dev
 ```
 
@@ -224,7 +224,7 @@ npm run dev
 Open another terminal:
 
 ```bash
-cd client
+cd frontend
 npm run dev
 ```
 
