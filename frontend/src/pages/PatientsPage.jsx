@@ -7,6 +7,8 @@ import PatientFormModal from '../components/patients/PatientFormModal';
 import PatientDetailsModal from '../components/patients/PatientDetailsModal';
 import DeleteConfirmModal from '../components/patients/DeleteConfirmModal';
 import Button from '../components/common/Button';
+import { useAuth } from '../hooks/useAuth';
+import { patientsToCsv } from '../utils/patientCsv';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
 import {
@@ -16,11 +18,13 @@ import {
   LayoutGrid,
   List,
   RefreshCw,
-  Users
+  Users,
+  Download
 } from 'lucide-react';
 
 export function PatientsPage() {
   const { isOnline } = useNetwork();
+  const { isAuthenticated } = useAuth();
   const {
     patients,
     loading,
@@ -38,6 +42,23 @@ export function PatientsPage() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientToEdit, setPatientToEdit] = useState(null);
   const [patientToDelete, setPatientToDelete] = useState(null);
+
+  const handleExportCsv = () => {
+    // Patient routes are protected; keep this check as a second UI guard.
+    if (!isAuthenticated || loading || error) return;
+
+    const csv = patientsToCsv(patients);
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `medilog-patient-records-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+  };
 
   const handleSearchChange = (e) => {
     setFilters((prev) => ({ ...prev, search: e.target.value }));
@@ -63,6 +84,19 @@ export function PatientsPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          {isAuthenticated && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportCsv}
+              icon={Download}
+              disabled={loading || !!error}
+              title="Export the currently listed patient records as CSV"
+              aria-label={`Export ${patients.length} listed patient records as CSV`}
+            >
+              Export CSV ({patients.length})
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="sm"
