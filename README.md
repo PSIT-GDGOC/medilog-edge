@@ -266,6 +266,100 @@ Before creating a Pull Request, contributors should verify:
 
 ---
 
+## 🔒 Security Configuration
+
+MediLog Edge integrates production-ready security middleware to safeguard sensitive healthcare records and mitigate web vulnerabilities and automated brute-force attacks.
+
+### 1. HTTP Security Headers (Helmet Middleware)
+
+The backend employs [Helmet](https://helmetjs.github.io/) (`helmet`) mounted at the top of the middleware stack in `backend/server.js` (configured via `backend/middleware/security.js`). This automatically configures standard security headers on all HTTP responses:
+
+| HTTP Header | Configuration / Value | Security Purpose |
+| :--- | :--- | :--- |
+| `Content-Security-Policy` | Restricted directives (`default-src 'self'`, etc.) | Mitigates Cross-Site Scripting (XSS) and code injection |
+| `X-Content-Type-Options` | `nosniff` | Prevents MIME-type sniffing attacks |
+| `X-Frame-Options` | `SAMEORIGIN` | Protects against Clickjacking attacks |
+| `Strict-Transport-Security` | `max-age=15552000; includeSubDomains` | Enforces secure (HTTPS) connections |
+| `Referrer-Policy` | `no-referrer` | Protects sensitive URL referrers from leaking |
+| `X-DNS-Prefetch-Control` | `off` | Controls browser DNS prefetching |
+| `Cross-Origin-Resource-Policy` | `cross-origin` | Allows legitimate cross-origin asset/API access without CORS regressions |
+| `X-Powered-By` | Removed / Disabled | Prevents server framework fingerprinting |
+
+### 2. Rate Limiting Configuration (`express-rate-limit`)
+
+Rate limiting is enforced using `express-rate-limit` to protect critical authentication endpoints against brute-force password guessing, credential stuffing, and Denial-of-Service (DoS) attacks.
+
+#### Protected Authentication Endpoints
+- `POST /api/auth/login`: Restricted to protect user accounts from dictionary and brute-force attacks.
+- `POST /api/auth/register`: Restricted to prevent automated mass user registration abuse.
+
+#### General API Endpoints
+- `/api/*`: General routes (e.g. `/api/health`, `/api/patients`) are governed by `apiRateLimiter` to protect server resources while ensuring uninterrupted normal healthcare operations.
+
+#### Environment Variables & Defaults
+
+| Variable | Default Value | Description |
+| :--- | :--- | :--- |
+| `AUTH_RATE_LIMIT_WINDOW_MS` | `900000` (15 minutes) | Sliding time window in milliseconds for authentication endpoints |
+| `AUTH_RATE_LIMIT_MAX` | `5` | Maximum allowed authentication attempts per IP per window |
+| `API_RATE_LIMIT_WINDOW_MS` | `900000` (15 minutes) | Sliding time window in milliseconds for general API routes |
+| `API_RATE_LIMIT_MAX` | `100` | Maximum allowed API requests per IP per window |
+
+Standard headers (`RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` / `RateLimit-Policy`) are exposed on responses (`standardHeaders: true`), while obsolete `X-RateLimit-*` headers are disabled (`legacyHeaders: false`).
+
+### 3. Rate-Limit Error Response Format
+
+When an IP address exceeds the allowed threshold, the server rejects the request with HTTP status `429 Too Many Requests` and returns a standardized JSON payload:
+
+```json
+{
+  "success": false,
+  "status": 429,
+  "error": "Too Many Requests",
+  "message": "Too many authentication attempts from this IP, please try again after 15 minutes."
+}
+```
+
+For general API routes exceeding limits:
+```json
+{
+  "success": false,
+  "status": 429,
+  "error": "Too Many Requests",
+  "message": "Too many requests from this IP, please try again after 15 minutes."
+}
+```
+
+### 4. Verification & Testing Instructions
+
+#### Automated Test Suite Execution
+Run the comprehensive automated security test suite using Jest and Supertest:
+
+```bash
+# From repository root:
+npm test
+
+# Or directly from the backend directory:
+cd backend
+npm test
+```
+
+#### Manual Verification Steps
+1. **Verify Security Headers**:
+   ```bash
+   curl -I http://localhost:5000/api/health
+   ```
+   Confirm presence of `x-content-type-options: nosniff`, `x-frame-options`, `strict-transport-security`, and absence of `x-powered-by`.
+
+2. **Verify Rate Limiting & 429 Rejection**:
+   Send 6 rapid sequential POST requests to `http://localhost:5000/api/auth/login`:
+   ```bash
+   for i in {1..6}; do curl -i -X POST http://localhost:5000/api/auth/login -H "Content-Type: application/json" -d '{"email":"test@example.com","password":"bad"}'; done
+   ```
+   The first 5 requests will return status 400 or 401; the 6th request will return HTTP 429 with the JSON message and standard `RateLimit-*` headers.
+
+---
+
 ## 🤝 Contributing
 
 MediLog Edge is an open-source project developed as part of the **GDGoC PSIT Hacktoberfest Initiative**.
