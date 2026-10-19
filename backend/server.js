@@ -8,11 +8,21 @@ const express = require('express');
 const cors = require('cors');
 const { connectDB } = require('./services/db');
 const errorHandler = require('./middleware/errorHandler');
+const { securityHeadersMiddleware, apiRateLimiter } = require('./middleware/security');
 
 const authRoutes = require('./routes/authRoutes');
 const patientRoutes = require('./routes/patientRoutes');
 
 const app = express();
+
+// Disable x-powered-by header to prevent framework fingerprinting
+app.disable('x-powered-by');
+
+// Trust proxy for rate limiting when behind reverse proxies / load balancers
+app.set('trust proxy', 1);
+
+// Security HTTP headers via Helmet (mounted first before any other middleware or routes)
+app.use(securityHeadersMiddleware);
 
 // Middleware
 app.use(cors({
@@ -22,6 +32,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Apply general API rate limiting across all /api routes
+app.use('/api', apiRateLimiter);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
