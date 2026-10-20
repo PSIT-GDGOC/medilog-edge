@@ -1,3 +1,4 @@
+import { sortPatients } from '../utils/patientSorting';
 import { useState, useEffect, useCallback } from 'react';
 import { patientService } from '../services/patientService';
 import { useNetwork } from './useNetwork';
@@ -12,6 +13,7 @@ export function usePatients() {
     bloodGroup: 'All',
     gender: 'All'
   });
+  const [sortBy, setSortBy] = useState('created');
 
   const loadPatients = useCallback(async () => {
     setLoading(true);
@@ -23,14 +25,15 @@ export function usePatients() {
         gender: filters.gender,
         isOnline
       });
-      setPatients(data);
+
+      setPatients(sortPatients(data, sortBy));
     } catch (err) {
       console.error('[usePatients] Error loading patients:', err);
       setError('Failed to load patient records. Please refresh.');
     } finally {
       setLoading(false);
     }
-  }, [filters, isOnline]);
+  }, [filters, isOnline, sortBy]);
 
   useEffect(() => {
     loadPatients();
@@ -63,6 +66,8 @@ export function usePatients() {
     error,
     filters,
     setFilters,
+    sortBy,
+    setSortBy,
     reload: loadPatients,
     addPatient,
     editPatient,
