@@ -31,6 +31,8 @@ export function PatientsPage() {
     error,
     filters,
     setFilters,
+    sortBy,
+    setSortBy,
     reload,
     addPatient,
     editPatient,
@@ -166,6 +168,20 @@ export function PatientsPage() {
             <option value="Male">Male</option>
             <option value="Female">Female</option>
             <option value="Other">Other</option>
+          </select>
+          {/* Sort patients */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            aria-label="Sort patients"
+            className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+          >
+            <option value="created">Recently Added</option>
+            <option value="updated">Recently Updated</option>
+            <option value="name-asc">Name: A to Z</option>
+            <option value="name-desc">Name: Z to A</option>
+            <option value="age-asc">Age: Low to High</option>
+            <option value="age-desc">Age: High to Low</option>
           </select>
 
           {/* View Mode Toggle */}
