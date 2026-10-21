@@ -1,5 +1,5 @@
 import { sortPatients } from '../utils/patientSorting';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { patientService } from '../services/patientService';
 import { useNetwork } from './useNetwork';
 
@@ -18,6 +18,7 @@ export function usePatients() {
   const loadPatients = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
       const data = await patientService.getPatients({
         search: filters.search,
@@ -26,18 +27,23 @@ export function usePatients() {
         isOnline
       });
 
-      setPatients(sortPatients(data, sortBy));
+      setPatients(data);
     } catch (err) {
       console.error('[usePatients] Error loading patients:', err);
       setError('Failed to load patient records. Please refresh.');
     } finally {
       setLoading(false);
     }
-  }, [filters, isOnline, sortBy]);
+  }, [filters, isOnline]);
 
   useEffect(() => {
     loadPatients();
   }, [loadPatients]);
+
+  const sortedPatients = useMemo(
+    () => sortPatients(patients, sortBy),
+    [patients, sortBy]
+  );
 
   const addPatient = async (patientData) => {
     const result = await patientService.createPatient(patientData, isOnline);
@@ -47,7 +53,11 @@ export function usePatients() {
   };
 
   const editPatient = async (patientId, updates) => {
-    const result = await patientService.updatePatient(patientId, updates, isOnline);
+    const result = await patientService.updatePatient(
+      patientId,
+      updates,
+      isOnline
+    );
     await refreshPendingCount();
     await loadPatients();
     return result;
@@ -61,7 +71,7 @@ export function usePatients() {
   };
 
   return {
-    patients,
+    patients: sortedPatients,
     loading,
     error,
     filters,
