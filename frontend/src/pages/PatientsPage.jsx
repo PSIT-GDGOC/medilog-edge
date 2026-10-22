@@ -29,6 +29,7 @@ export function PatientsPage() {
     patients,
     loading,
     error,
+    dataNotice,
     filters,
     setFilters,
     reload,
@@ -195,50 +196,82 @@ export function PatientsPage() {
           </div>
         </div>
       </div>
-
       {/* Main Patient Content */}
-      {loading ? (
-        <LoadingSpinner message="Searching patient records..." />
-      ) : error ? (
-        <div className="p-4 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-xl text-center">
-          {error}
-        </div>
-      ) : patients.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title={
-            filters.search || filters.bloodGroup !== 'All' || filters.gender !== 'All'
-              ? 'No matching patients found'
-              : 'No patients registered yet'
-          }
-          description={
-            filters.search || filters.bloodGroup !== 'All' || filters.gender !== 'All'
-              ? 'Try adjusting your search keywords or filter options.'
-              : 'Add your first patient to begin maintaining offline-first health records.'
-          }
-          actionLabel="Register Patient"
-          onAction={() => setIsAddModalOpen(true)}
-        />
-      ) : viewMode === 'table' ? (
-        <PatientTable
-          patients={patients}
-          onView={(p) => setSelectedPatient(p)}
-          onEdit={(p) => setPatientToEdit(p)}
-          onDelete={(p) => setPatientToDelete(p)}
-        />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {patients.map((p) => (
-            <PatientCard
-              key={p.patientId || p._id}
-              patient={p}
-              onView={(patient) => setSelectedPatient(patient)}
-              onEdit={(patient) => setPatientToEdit(patient)}
-              onDelete={(patient) => setPatientToDelete(patient)}
-            />
-          ))}
-        </div>
-      )}
+      <div aria-live="polite" aria-busy={loading}>
+        {loading ? (
+          <LoadingSpinner message="Loading patient records..." />
+        ) : error ? (
+          <div
+            role="alert"
+            className="p-5 bg-rose-950/60 border border-rose-800 text-rose-300 rounded-xl text-center"
+          >
+            <p className="text-sm font-semibold mb-2">
+              Unable to load patient records
+            </p>
+            <p className="text-xs mb-4">{error}</p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={reload}
+              icon={RefreshCw}
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : (
+          <>
+            {dataNotice && (
+              <div
+                role="status"
+                className="mb-4 p-3 bg-amber-950/40 border border-amber-800/70 text-amber-200 text-xs rounded-lg"
+              >
+                {dataNotice}
+              </div>
+            )}
+
+            {patients.length === 0 ? (
+              <EmptyState
+                icon={Users}
+                title={
+                  filters.search ||
+                  filters.bloodGroup !== 'All' ||
+                  filters.gender !== 'All'
+                    ? 'No matching patients found'
+                    : 'No patients registered yet'
+                }
+                description={
+                  filters.search ||
+                  filters.bloodGroup !== 'All' ||
+                  filters.gender !== 'All'
+                    ? 'Try changing your search keywords or clearing one or more filters.'
+                    : 'Register your first patient to begin maintaining offline-first health records.'
+                }
+                actionLabel="Register Patient"
+                onAction={() => setIsAddModalOpen(true)}
+              />
+            ) : viewMode === 'table' ? (
+              <PatientTable
+                patients={patients}
+                onView={(patient) => setSelectedPatient(patient)}
+                onEdit={(patient) => setPatientToEdit(patient)}
+                onDelete={(patient) => setPatientToDelete(patient)}
+              />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {patients.map((patient) => (
+                  <PatientCard
+                    key={patient.patientId || patient._id}
+                    patient={patient}
+                    onView={(item) => setSelectedPatient(item)}
+                    onEdit={(item) => setPatientToEdit(item)}
+                    onDelete={(item) => setPatientToDelete(item)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Modals */}
       <PatientFormModal
