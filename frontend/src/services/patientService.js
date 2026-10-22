@@ -7,84 +7,145 @@ import {
   deleteLocalPatient,
   addToSyncQueue
 } from '../db/indexDB';
-import { syncService } from './syncService';
 
 export const patientService = {
   /**
-   * Fetch patients list:
-   * 1. If online, fetch from server, store in IndexedDB, and return.
-   * 2. If offline or server fetch fails, load from IndexedDB.
+   * Fetch patients from the server when online, preserving unsynced
+   * local records and falling back to IndexedDB when the request fails.
    */
-  async getPatients({ search = '', bloodGroup = 'All', gender = 'All', isOnline = true } = {}) {
+  async getPatients({
+    search = '',
+    bloodGroup = 'All',
+    gender = 'All',
+    isOnline = true
+  } = {}) {
     let localPatients = await getAllLocalPatients();
+    const hadCachedPatients = localPatients.length > 0;
+    let fetchError = null;
+    let source = 'local';
+    let serverPatients = null;
 
     if (isOnline) {
       try {
         const queryParams = new URLSearchParams();
+
         if (search) queryParams.append('q', search);
-        if (bloodGroup && bloodGroup !== 'All') queryParams.append('bloodGroup', bloodGroup);
-        if (gender && gender !== 'All') queryParams.append('gender', gender);
 
-        const res = await apiRequest(`/patients?${queryParams.toString()}`);
-        if (res.data) {
-          // Merge with any unsynced offline records in local DB
-          const unsyncedLocals = localPatients.filter((p) => p.isSynced === false);
-          await saveAllLocalPatients(res.data);
+        if (bloodGroup && bloodGroup !== 'All') {
+          queryParams.append('bloodGroup', bloodGroup);
+        }
 
-          // Re-persist unsynced records
-          for (const unsynced of unsyncedLocals) {
-            await saveLocalPatient(unsynced);
+        if (gender && gender !== 'All') {
+          queryParams.append('gender', gender);
+        }
+
+        const res = await apiRequest(
+          `/patients?${queryParams.toString()}`
+        );
+
+        if (Array.isArray(res.data)) {
+          serverPatients = res.data;
+
+          const unsyncedLocals = localPatients.filter(
+            (patient) => patient.isSynced === false
+          );
+
+          if (res.data.length > 0) {
+            await saveAllLocalPatients(res.data);
+          }
+
+          for (const patient of unsyncedLocals) {
+            await saveLocalPatient(patient);
           }
 
           localPatients = await getAllLocalPatients();
+          source = 'server';
+        } else {
+          fetchError =
+            'The server returned an unexpected response. Please try again.';
         }
       } catch (err) {
-        console.warn('[PatientService] Network fetch failed, using local IndexedDB data:', err.message);
+        console.warn(
+          '[PatientService] Server fetch failed; using local IndexedDB data:',
+          err.message
+        );
+
+        fetchError = err.isNetworkError
+          ? 'Unable to reach the server. Check your connection and try again.'
+          : err.status
+            ? `Unable to load patient records (HTTP ${err.status}). Please try again.`
+            : 'Unable to load patient records because of a server error. Please try again.';
       }
     }
 
-    // Filter local records client-side (for offline mode or filtered view)
-    let filtered = localPatients;
+    const hasCachedPatients = localPatients.length > 0;
+
+    // Use the successful server response for this request.
+    // Otherwise, fall back to locally stored records.
+    let filtered =
+      serverPatients !== null
+        ? [...serverPatients]
+        : [...localPatients];
 
     if (search) {
-      const q = search.toLowerCase();
+      const query = search.toLowerCase();
+
       filtered = filtered.filter(
-        (p) =>
-          p.name?.toLowerCase().includes(q) ||
-          p.patientId?.toLowerCase().includes(q) ||
-          p.phone?.toLowerCase().includes(q) ||
-          p.address?.toLowerCase().includes(q) ||
-          p.notes?.toLowerCase().includes(q)
+        (patient) =>
+          patient.name?.toLowerCase().includes(query) ||
+          patient.patientId?.toLowerCase().includes(query) ||
+          patient.phone?.toLowerCase().includes(query) ||
+          patient.address?.toLowerCase().includes(query) ||
+          patient.notes?.toLowerCase().includes(query)
       );
     }
 
     if (bloodGroup && bloodGroup !== 'All') {
-      filtered = filtered.filter((p) => p.bloodGroup === bloodGroup);
+      filtered = filtered.filter(
+        (patient) => patient.bloodGroup === bloodGroup
+      );
     }
 
     if (gender && gender !== 'All') {
-      filtered = filtered.filter((p) => p.gender === gender);
+      filtered = filtered.filter(
+        (patient) => patient.gender === gender
+      );
     }
 
-    // Sort newest first
-    filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    filtered.sort(
+      (a, b) =>
+        new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+    );
 
-    return filtered;
+    return {
+      patients: filtered,
+      source,
+      fetchError,
+      hasCachedPatients: hasCachedPatients || hadCachedPatients
+    };
   },
 
   /**
-   * Get single patient record by ID
+   * Get a single patient by ID, falling back to IndexedDB if needed.
    */
   async getPatientById(id, isOnline = true) {
     if (isOnline) {
       try {
         const res = await apiRequest(`/patients/${id}`);
+
         if (res.data) {
-          await saveLocalPatient({ ...res.data, isSynced: true });
+          await saveLocalPatient({
+            ...res.data,
+            isSynced: true
+          });
+
           return res.data;
         }
       } catch (err) {
-        console.warn(`[PatientService] Server lookup failed for ${id}, falling back to IndexedDB:`, err.message);
+        console.warn(
+          `[PatientService] Server lookup failed for ${id}, falling back to IndexedDB:`,
+          err.message
+        );
       }
     }
 
@@ -92,7 +153,7 @@ export const patientService = {
   },
 
   /**
-   * Create patient record
+   * Create a patient record online or queue it for offline sync.
    */
   async createPatient(formData, isOnline = true) {
     const year = new Date().getFullYear();
@@ -124,17 +185,28 @@ export const patientService = {
           })
         });
 
-        const savedPatient = { ...res.data, isSynced: true };
+        const savedPatient = {
+          ...res.data,
+          isSynced: true
+        };
+
         await saveLocalPatient(savedPatient);
-        return { patient: savedPatient, offline: false };
+
+        return {
+          patient: savedPatient,
+          offline: false
+        };
       } catch (err) {
-        console.warn('[PatientService] Online create failed. Saving to offline queue:', err.message);
+        console.warn(
+          '[PatientService] Online create failed. Saving to offline queue:',
+          err.message
+        );
       }
     }
 
-    // Offline flow
     newPatient.isSynced = false;
     await saveLocalPatient(newPatient);
+
     await addToSyncQueue({
       operation: 'CREATE',
       payload: newPatient,
@@ -142,14 +214,18 @@ export const patientService = {
       clientTempId: newPatient.clientTempId
     });
 
-    return { patient: newPatient, offline: true };
+    return {
+      patient: newPatient,
+      offline: true
+    };
   },
 
   /**
-   * Update patient record
+   * Update a patient record online or queue the update for offline sync.
    */
   async updatePatient(patientId, updates, isOnline = true) {
     const local = (await getLocalPatient(patientId)) || {};
+
     const updatedLocal = {
       ...local,
       ...updates,
@@ -164,28 +240,42 @@ export const patientService = {
           body: JSON.stringify(updates)
         });
 
-        const saved = { ...res.data, isSynced: true };
+        const saved = {
+          ...res.data,
+          isSynced: true
+        };
+
         await saveLocalPatient(saved);
-        return { patient: saved, offline: false };
+
+        return {
+          patient: saved,
+          offline: false
+        };
       } catch (err) {
-        console.warn('[PatientService] Online update failed. Adding to offline queue:', err.message);
+        console.warn(
+          '[PatientService] Online update failed. Adding to offline queue:',
+          err.message
+        );
       }
     }
 
-    // Offline update flow
     updatedLocal.isSynced = false;
     await saveLocalPatient(updatedLocal);
+
     await addToSyncQueue({
       operation: 'UPDATE',
       payload: updates,
       patientId
     });
 
-    return { patient: updatedLocal, offline: true };
+    return {
+      patient: updatedLocal,
+      offline: true
+    };
   },
 
   /**
-   * Delete patient record
+   * Delete a patient online or queue the deletion for offline sync.
    */
   async deletePatient(patientId, isOnline = true) {
     if (isOnline) {
@@ -193,21 +283,32 @@ export const patientService = {
         await apiRequest(`/patients/${patientId}`, {
           method: 'DELETE'
         });
+
         await deleteLocalPatient(patientId);
-        return { success: true, offline: false };
+
+        return {
+          success: true,
+          offline: false
+        };
       } catch (err) {
-        console.warn('[PatientService] Online delete failed. Queuing offline deletion:', err.message);
+        console.warn(
+          '[PatientService] Online delete failed. Queuing offline deletion:',
+          err.message
+        );
       }
     }
 
-    // Offline delete flow
     await deleteLocalPatient(patientId);
+
     await addToSyncQueue({
       operation: 'DELETE',
       payload: { patientId },
       patientId
     });
 
-    return { success: true, offline: true };
+    return {
+      success: true,
+      offline: true
+    };
   }
 };
