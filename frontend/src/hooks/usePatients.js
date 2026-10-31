@@ -1,13 +1,16 @@
-import { sortPatients } from '../utils/patientSorting';
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { patientService } from '../services/patientService';
+import { sortPatients } from '../utils/patientSorting';
 import { useNetwork } from './useNetwork';
 
 export function usePatients() {
   const { isOnline, refreshPendingCount } = useNetwork();
+
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dataNotice, setDataNotice] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
     bloodGroup: 'All',
@@ -18,19 +21,37 @@ export function usePatients() {
   const loadPatients = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setDataNotice(null);
 
     try {
-      const data = await patientService.getPatients({
+      const result = await patientService.getPatients({
         search: filters.search,
         bloodGroup: filters.bloodGroup,
         gender: filters.gender,
         isOnline
       });
 
-      setPatients(data);
+      setPatients(result.patients);
+
+      if (result.fetchError) {
+        if (result.hasCachedPatients) {
+          setDataNotice(
+            `${result.fetchError} Showing locally saved patient records instead.`
+          );
+        } else {
+          setError(result.fetchError);
+        }
+      } else if (!isOnline) {
+        setDataNotice(
+          'You are offline. Patient records are being loaded from this device.'
+        );
+      }
     } catch (err) {
-      console.error('[usePatients] Error loading patients:', err);
-      setError('Failed to load patient records. Please refresh.');
+      console.error('[usePatients] Error loading patient records:', err);
+      setError(
+        err.message ||
+          'Unable to load patient records. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -74,6 +95,7 @@ export function usePatients() {
     patients: sortedPatients,
     loading,
     error,
+    dataNotice,
     filters,
     setFilters,
     sortBy,
