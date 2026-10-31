@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { patientService } from '../services/patientService';
+import { sortPatients } from '../utils/patientSorting';
 import { useNetwork } from './useNetwork';
 
 export function usePatients() {
@@ -14,6 +16,7 @@ export function usePatients() {
     bloodGroup: 'All',
     gender: 'All'
   });
+  const [sortBy, setSortBy] = useState('created');
 
   const loadPatients = useCallback(async () => {
     setLoading(true);
@@ -58,6 +61,11 @@ export function usePatients() {
     loadPatients();
   }, [loadPatients]);
 
+  const sortedPatients = useMemo(
+    () => sortPatients(patients, sortBy),
+    [patients, sortBy]
+  );
+
   const addPatient = async (patientData) => {
     const result = await patientService.createPatient(patientData, isOnline);
     await refreshPendingCount();
@@ -84,12 +92,14 @@ export function usePatients() {
   };
 
   return {
-    patients,
+    patients: sortedPatients,
     loading,
     error,
     dataNotice,
     filters,
     setFilters,
+    sortBy,
+    setSortBy,
     reload: loadPatients,
     addPatient,
     editPatient,
